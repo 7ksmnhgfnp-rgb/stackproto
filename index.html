@@ -1,134 +1,176 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#121212"><title>Stack · Kamera-Zähler</title>
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stack · Gewichtsblock-Kamera</title>
 <style>
-:root{--bg:#121212;--card:#232323;--ac:#e4ff3a;--mu:#a5a5a5}
+:root{--bg:#121212;--card:#232323;--y:#E4FF3A;--o:#FF5A2A;--t:#fff;--m:#9a9a9a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:#fff;font:500 16px Inter,system-ui,sans-serif;padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
-h1{font:800 22px "Bricolage Grotesque",Inter,sans-serif;margin:0 0 2px}.mu{color:var(--mu);margin:0;font-size:14px}
-.card{background:var(--card);border-radius:30px;padding:18px;margin-top:14px}
-.tabs{display:flex;gap:8px;margin-top:14px}.tab{flex:1;border:0;border-radius:999px;padding:12px;font:700 15px Inter,sans-serif;background:#333;color:#fff}.tab.on{background:var(--ac);color:#121212}
-.big{font:800 min(38vw,150px)/1 "Bricolage Grotesque",Inter,sans-serif;color:var(--ac);text-align:center;margin:2px 0 6px}
-.lbl{text-align:center;font-weight:700;letter-spacing:.08em;color:var(--mu);font-size:12px}
-.vw{position:relative;border-radius:22px;overflow:hidden;background:#000;aspect-ratio:4/3;touch-action:none}
-.vw video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
-.vw canvas.ov{position:absolute;inset:0;width:100%;height:100%}
-.roi{position:absolute;border:2px solid var(--ac);background:rgba(228,255,58,.12);border-radius:6px;pointer-events:none}
-.btn{display:block;width:100%;border:0;border-radius:999px;padding:16px;font:700 17px Inter,sans-serif;background:var(--ac);color:#121212;margin-top:12px}.btn.g{background:#333;color:#fff}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.st{display:inline-block;padding:5px 12px;border-radius:99px;background:#333;font-weight:700;font-size:12px}.st.on{background:var(--ac);color:#121212}
-select,input[type=range]{width:100%;margin-top:8px;accent-color:#e4ff3a}
-select{background:#333;color:#fff;border:0;border-radius:14px;padding:12px;font:600 15px Inter,sans-serif}
-#hint{font-size:13px;color:var(--mu);line-height:1.45;margin:10px 2px 0}
-canvas#gr{width:100%;height:90px;display:block;margin-top:10px;border-radius:14px;background:#1a1a1a}
+body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 Inter,-apple-system,Arial,sans-serif;padding:max(14px,env(safe-area-inset-top)) 14px 40px}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.5px}.mut{color:var(--m)}
+.card{background:var(--card);border-radius:30px;padding:16px;margin-top:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font:600 15px inherit;font-family:inherit;border:0;border-radius:999px;padding:12px 18px;background:#333;color:#fff;cursor:pointer}
+button.p{background:var(--y);color:#121212}button.on{background:var(--y);color:#121212}
+#stage{position:relative;width:100%;border-radius:22px;overflow:hidden;background:#000;touch-action:none}
+canvas{display:block;width:100%}
+#ov{position:absolute;inset:0;width:100%;height:100%}
+.big{font:800 84px/1 'Bricolage Grotesque',Inter,sans-serif;color:var(--y)}
+.kg{font:800 44px/1 'Bricolage Grotesque',Inter,sans-serif}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--m)}
+input[type=number]{width:84px;background:#333;border:0;border-radius:14px;padding:10px;color:#fff;font:600 16px inherit;font-family:inherit}
+.warn{color:var(--o);font-size:14px;min-height:20px}
+#log div{padding:8px 0;border-top:1px solid #333;display:flex;justify-content:space-between}
 </style></head><body>
-<h1>Kamera-Zähler</h1><p class="mu">Prototyp: Wiederholungen am Gerät per Kamera zählen.</p>
-<div class="tabs"><button class="tab on" id="tB">Gewichtsblock</button><button class="tab" id="tP">Körper</button></div>
-<div class="card"><div class="lbl">WIEDERHOLUNGEN</div><div class="big" id="n">0</div>
-<div class="row"><span class="st" id="st">Bereit</span><span class="mu" id="info"></span></div>
-<canvas id="gr" width="600" height="180"></canvas></div>
-<div class="card"><div class="vw" id="vw"><video id="v" playsinline muted></video><canvas class="ov" id="ov" width="320" height="240"></canvas><div class="roi" id="roi"></div></div>
-<div id="pw" style="display:none"><div class="mu" style="margin-top:12px">Übung</div><select id="ex"></select></div>
-<p id="hint"></p>
-<div class="row" style="margin-top:12px"><span class="mu">Empfindlichkeit</span><span class="mu" id="sv">mittel</span></div><input id="sens" type="range" min="1" max="9" value="5">
-<button class="btn" id="go">Kamera starten</button><div class="row" style="gap:10px"><button class="btn g" id="fl">Kamera wechseln</button><button class="btn g" id="rs">Zurücksetzen</button></div>
-<button class="btn g" id="dm">Demo ohne Kamera</button></div>
-<script type="module">
-/* ═══ Kern ohne Oberfläche ═══ */
-export function RepCounter(){
-  const s={h:[],state:null,n:0,last:0,ema:null,minRange:6,a:.4};
-  s.reset=()=>{s.h=[];s.state=null;s.n=0;s.last=0;s.ema=null};
-  s.push=(v,t)=>{
-    s.ema=s.ema==null?v:s.ema+s.a*(v-s.ema);const x=s.ema;
-    s.h.push([t,x]);while(s.h.length&&t-s.h[0][0]>8000)s.h.shift();
-    let mn=1e9,mx=-1e9;for(const q of s.h){if(q[1]<mn)mn=q[1];if(q[1]>mx)mx=q[1]}
-    const rg=mx-mn;if(rg<s.minRange)return{ok:false,x,mn,mx};
-    const lo=mn+rg*.35,hi=mn+rg*.65;let rep=false;
-    if(s.state==null)s.state=x>mn+rg*.5?"hi":"lo";
-    if(s.state==="hi"&&x<lo)s.state="lo";
-    else if(s.state==="lo"&&x>hi){s.state="hi";if(t-s.last>600){s.n++;s.last=t;rep=true}}
-    return{ok:true,x,mn,mx,lo,hi,rep,state:s.state};
-  };
-  return s}
-/* Vertikale Bewegung eines Bildausschnitts (Spaltenprofil, 1D-Verschiebung) */
-export function BlockTracker(){
-  const s={refs:[],pos:[],K:3,R:8,base:0,hp:null,last:null};
-  s.reset=()=>{s.refs=[];s.pos=[];s.hp=null};
-  const norm=P=>{const n=P.length,o=new Float32Array(n),w=6;for(let i=0;i<n;i++){let a=0,c=0;for(let j=Math.max(0,i-w);j<=Math.min(n-1,i+w);j++){a+=P[j];c++}o[i]=P[i]-a/c}return o};
-  s.push=(P0,t)=>{
-    const P=norm(P0),n=P.length;let p=0;
-    if(s.refs.length>=s.K){const ref=s.refs[s.refs.length-s.K],pr=s.pos[s.pos.length-s.K];
-      let best=0,bc=1e18,cs={},sum=0,m=0;
-      for(let d=-s.R;d<=s.R;d++){let c=0,k=0;for(let y=s.R;y<n-s.R;y++){c+=Math.abs(P[y]-ref[y+d]);k++}c/=k;cs[d]=c;sum+=c;m++;if(c<bc){bc=c;best=d}}
-      const mean=sum/m;let d=best;
-      if(bc>mean*.92)d=0;                       /* kein eindeutiges Maximum: keine Bewegung annehmen */
-      else if(best>-s.R&&best<s.R){const a=cs[best-1],b=cs[best],c=cs[best+1],den=a-2*b+c;if(den>1e-9)d=best+.5*(a-c)/den}
-      p=pr+d}
-    else p=s.pos.length?s.pos[s.pos.length-1]:0;
-    s.refs.push(P);s.pos.push(p);if(s.refs.length>s.K+2){s.refs.shift();s.pos.shift()}
-    s.hp=s.hp==null?p:s.hp+(1-Math.exp(-(1/30)/6))*(p-s.hp);   /* langsamer Drift raus */
-    s.last=p-s.hp;return s.last};
-  return s}
-/* Winkel und Höhen aus Körperpunkten */
-export const LM={LS:11,RS:12,LE:13,RE:14,LW:15,RW:16,LH:23,RH:24,LK:25,RK:26,LA:27,RA:28};
-export const EXS=[
- {id:"curl",name:"Bizeps-Curl / Beinbeuger (Winkel)",f:(p,sd)=>ang(p[sd?LM.LS:LM.RS],p[sd?LM.LE:LM.RE],p[sd?LM.LW:LM.RW]),k:[["S","E","W"]],scale:1,min:25},
- {id:"press",name:"Bankdrücken / Schulterdrücken (Handgelenk-Höhe)",f:(p,sd)=>-(p[sd?LM.LW:LM.RW].y)*100,k:[["W"]],scale:1,min:8},
- {id:"squat",name:"Kniebeuge / Beinpresse (Hüft-Höhe)",f:(p,sd)=>-(p[sd?LM.LH:LM.RH].y)*100,k:[["H"]],scale:1,min:6},
- {id:"pull",name:"Klimmzug / Latzug (Schulter-Höhe)",f:(p,sd)=>-(p[sd?LM.LS:LM.RS].y)*100,k:[["S"]],scale:1,min:6},
- {id:"push",name:"Liegestütz (Schulter-Höhe)",f:(p,sd)=>-(p[sd?LM.LS:LM.RS].y)*100,k:[["S"]],scale:1,min:5}];
-export function ang(a,b,c){const v1=[a.x-b.x,a.y-b.y],v2=[c.x-b.x,c.y-b.y],d=v1[0]*v2[0]+v1[1]*v2[1],m=Math.hypot(...v1)*Math.hypot(...v2);return m?Math.acos(Math.max(-1,Math.min(1,d/m)))*180/Math.PI:0}
-export function pickSide(p){const vl=(p[LM.LS].visibility+p[LM.LE].visibility+p[LM.LW].visibility+p[LM.LH].visibility)/4,vr=(p[LM.RS].visibility+p[LM.RE].visibility+p[LM.RW].visibility+p[LM.RH].visibility)/4;return vl>=vr}
-/* ═══ Oberfläche ═══ */
-if(typeof document!=="undefined"){
-const $=i=>document.getElementById(i);let mode="B",run=false,stream=null,facing="environment",tm=null,wl=null,demo=0,pose=null,poseLoading=false;
-const RC=RepCounter(),BT=BlockTracker();let roi={x:.3,y:.1,w:.4,h:.8};let sig=[];const cv=document.createElement("canvas");cv.width=160;cv.height=120;const cx=cv.getContext("2d",{willReadFrequently:true});
-$("ex").innerHTML=EXS.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
-const sensMap=v=>({1:.5,2:.65,3:.8,4:.9,5:1,6:1.15,7:1.3,8:1.5,9:1.8})[v];
-function hint(){ $("hint").textContent=mode==="B"?"Handy fest stellen und auf den Gewichtsblock richten. Ziehe mit dem Finger ein Rechteck über die Platten, so dass viel vom Block drin ist. Dann Start und mit dem Training beginnen.":"Handy seitlich stellen, so dass du von Kopf bis Fuß (oder zumindest Rumpf und Arme) zu sehen bist. Wähle die Übung. Beim ersten Start wird ein kleines Modell geladen (Internet nötig)."}
-function setMode(m){mode=m;$("tB").className="tab"+(m==="B"?" on":"");$("tP").className="tab"+(m==="P"?" on":"");$("pw").style.display=m==="P"?"block":"none";$("roi").style.display=m==="B"?"block":"none";RC.reset();BT.reset();sig=[];$("n").textContent=0;hint();applyEx()}
-function applyEx(){const e=EXS.find(x=>x.id===$("ex").value)||EXS[0];RC.minRange=mode==="B"?3/sensMap(+$("sens").value):e.min/sensMap(+$("sens").value)}
-$("tB").onclick=()=>setMode("B");$("tP").onclick=()=>setMode("P");$("ex").onchange=()=>{RC.reset();$("n").textContent=0;applyEx()};
-$("sens").oninput=e=>{const v=+e.target.value;$("sv").textContent=v<4?"niedrig":v>6?"hoch":"mittel";applyEx()};
-function drawRoi(){const r=$("roi").style;r.left=roi.x*100+"%";r.top=roi.y*100+"%";r.width=roi.w*100+"%";r.height=roi.h*100+"%"}drawRoi();
-let drag=null;$("vw").addEventListener("pointerdown",e=>{if(mode!=="B")return;const b=$("vw").getBoundingClientRect();drag={x:(e.clientX-b.left)/b.width,y:(e.clientY-b.top)/b.height};$("vw").setPointerCapture(e.pointerId)});
-$("vw").addEventListener("pointermove",e=>{if(!drag)return;const b=$("vw").getBoundingClientRect(),x=Math.min(1,Math.max(0,(e.clientX-b.left)/b.width)),y=Math.min(1,Math.max(0,(e.clientY-b.top)/b.height));roi={x:Math.min(drag.x,x),y:Math.min(drag.y,y),w:Math.max(.05,Math.abs(x-drag.x)),h:Math.max(.05,Math.abs(y-drag.y))};drawRoi();BT.reset();RC.reset()});
-$("vw").addEventListener("pointerup",()=>{drag=null});
-function graph(){const c=$("gr"),g=c.getContext("2d"),W=c.width,H=c.height;g.clearRect(0,0,W,H);if(sig.length<2)return;
- const now=sig[sig.length-1][0],t0=now-8000;let mn=1e9,mx=-1e9;for(const q of sig){if(q[1]<mn)mn=q[1];if(q[1]>mx)mx=q[1]}const rg=Math.max(mx-mn,1e-6);const Y=v=>H-10-(v-mn)/rg*(H-20);
- if(RC.h.length&&last&&last.ok){g.strokeStyle="rgba(255,255,255,.25)";g.setLineDash([6,5]);for(const v of [last.lo,last.hi]){g.beginPath();g.moveTo(0,Y(v));g.lineTo(W,Y(v));g.stroke()}g.setLineDash([])}
- g.strokeStyle="#e4ff3a";g.lineWidth=3;g.beginPath();sig.forEach((q,i)=>{const x=(q[0]-t0)/8000*W;i?g.lineTo(x,Y(q[1])):g.moveTo(x,Y(q[1]))});g.stroke()}
-let last=null;
-function handle(v,t){const r=RC.push(v,t);last=r;sig.push([t,r.x]);while(sig.length&&t-sig[0][0]>8000)sig.shift();
- if(r.ok){$("st").textContent=r.state==="lo"?"Unten":"Oben";$("st").className="st on";$("info").textContent="Signal ok"}else{$("st").textContent="Stellt sich ein";$("st").className="st";$("info").textContent="Bewegung gering"}
- if(r.rep){$("n").textContent=RC.n;try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}graph()}
-/* Quelle: Gewichtsblock */
-function tickB(){const v=$("v");if(!v.videoWidth)return;cx.drawImage(v,0,0,160,120);const x0=Math.round(roi.x*160),y0=Math.round(roi.y*120),w=Math.max(4,Math.round(roi.w*160)),h=Math.max(30,Math.round(roi.h*120));
- const d=cx.getImageData(x0,y0,Math.min(w,160-x0),Math.min(h,120-y0));const W=d.width,H=d.height,P=new Float32Array(H);
- for(let y=0;y<H;y++){let s=0;for(let x=0;x<W;x++){const i=(y*W+x)*4;s+=.3*d.data[i]+.59*d.data[i+1]+.11*d.data[i+2]}P[y]=s/W}
- const val=BT.push(P,performance.now());handle(val,performance.now())}
-/* Quelle: Koerper */
-async function loadPose(){if(pose||poseLoading)return pose;poseLoading=true;$("info").textContent="Modell wird geladen …";
- try{const m=await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");const fs=await m.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-  pose=await m.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"GPU"},runningMode:"VIDEO",numPoses:1});$("info").textContent="Modell bereit"}
- catch(e){$("info").textContent="Modell konnte nicht geladen werden (Internet nötig)";pose=null}
- poseLoading=false;return pose}
-let lastT=-1;
-function tickP(){const v=$("v");if(!pose||!v.videoWidth)return;const t=performance.now();if(t===lastT)return;lastT=t;let r;try{r=pose.detectForVideo(v,t)}catch(e){return}
- const ov=$("ov"),g=ov.getContext("2d");g.clearRect(0,0,ov.width,ov.height);if(!r.landmarks||!r.landmarks[0]){$("info").textContent="Niemand erkannt";return}
- const p=r.landmarks[0],sd=pickSide(p),e=EXS.find(x=>x.id===$("ex").value)||EXS[0];
- g.fillStyle="#e4ff3a";for(const i of Object.values(LM)){g.beginPath();g.arc(p[i].x*ov.width,p[i].y*ov.height,4,0,7);g.fill()}
- handle(e.f(p,sd),t)}
-function tick(){if(demo)return;mode==="B"?tickB():tickP()}
-async function start(){
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:640},height:{ideal:480}},audio:false})}catch(e){$("info").textContent="Kamera nicht erlaubt";return}
- const v=$("v");v.srcObject=stream;v.style.transform=facing==="user"?"scaleX(-1)":"none";await v.play();run=true;RC.reset();BT.reset();sig=[];applyEx();$("go").textContent="Stopp";$("go").className="btn g";
- try{wl=await navigator.wakeLock.request("screen")}catch(e){}
- if(mode==="P")await loadPose();tm=setInterval(tick,mode==="P"?33:33)}
-function stop(){run=false;demo=0;clearInterval(tm);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;try{wl&&wl.release()}catch(e){}$("go").textContent="Kamera starten";$("go").className="btn";$("st").textContent="Bereit";$("st").className="st"}
-$("go").onclick=()=>run||demo?stop():start();
-$("fl").onclick=async()=>{facing=facing==="environment"?"user":"environment";if(run){stop();await start()}};
-$("rs").onclick=()=>{RC.reset();BT.reset();sig=[];$("n").textContent=0;graph()};
-$("dm").onclick=()=>{if(run||demo){stop();return}demo=1;RC.reset();sig=[];RC.minRange=6;let t=0;$("go").textContent="Stopp";$("go").className="btn g";tm=setInterval(()=>{t+=33;const ph=(t%3200)/3200,v=50+40*Math.sin(2*Math.PI*ph)+(Math.random()-.5)*6;handle(v,t)},33)};
-window.__t={handle,RC,BT};
-setMode("B");
+<h1>Gewichtsblock-Kamera</h1>
+<div class="mut">Prototyp: zählt Wiederholungen und schlägt das Gewicht vor. Alles läuft auf dem Gerät.</div>
+
+<div class="card">
+ <div class="row" style="margin-bottom:10px">
+  <button id="bDemo" class="on">Demo</button><button id="bCam">Kamera</button>
+  <label class="p" style="display:inline-block"><button id="bVid" onclick="document.getElementById('fv').click()">Video laden</button></label>
+  <input id="fv" type="file" accept="video/*" hidden>
+ </div>
+ <div id="stage"><canvas id="cv" width="480" height="640"></canvas><canvas id="ov" width="480" height="640"></canvas></div>
+ <div class="warn" id="warn"></div>
+ <div class="mut" style="font-size:13px">Gelben Rahmen um den Gewichtsstapel ziehen, oben an der obersten Platte beginnen und bis unten.</div>
+</div>
+
+<div class="g2">
+ <div class="card"><div class="lbl">Wiederholungen</div><div class="big" id="reps">0</div></div>
+ <div class="card"><div class="lbl">Gewicht (Vorschlag)</div><div class="kg" id="kg">–</div><div class="mut" id="kgs" style="font-size:13px;margin-top:4px">–</div></div>
+</div>
+
+<div class="card">
+ <div class="row" style="justify-content:space-between">
+  <div><div class="lbl">Gewicht pro Platte</div><div class="row" style="margin-top:6px"><input id="kpp" type="number" step="0.5" min="0.5" value="5"><span class="mut">kg</span></div></div>
+  <div><div class="lbl">Platten im Stapel</div><div id="nTot" style="font-size:28px;font-weight:700">–</div></div>
+  <div><div class="lbl">Gehoben</div><div id="nLift" style="font-size:28px;font-weight:700">–</div></div>
+ </div>
+ <div class="row" style="margin-top:12px"><button id="bReset">Zähler zurück</button><button id="bConfirm" class="p">Gewicht stimmt</button></div>
+</div>
+
+<div class="card"><div class="lbl">Sätze</div><div id="log" class="mut" style="margin-top:6px">Noch keine. Ein Satz endet, wenn der Block 6 Sekunden still steht.</div></div>
+
+<video id="vd" playsinline muted loop style="display:none"></video>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const cv=$("cv"),cx=cv.getContext("2d",{willReadFrequently:true}),ov=$("ov"),ox=ov.getContext("2d");
+const W=480,H=640,ROWS=240,COLS=24;
+const off=document.createElement("canvas");off.width=COLS;off.height=ROWS;const ofx=off.getContext("2d",{willReadFrequently:true});
+let mode="demo",stream=null;const vd=$("vd");
+let roi={x:130,y:130,w:220,h:420};
+/* ---------- Demo-Szene ---------- */
+const DEMO={N:14,pitch:30,top:130,x:150,w:180,L:6,A:150,T:3.2,seed:7};
+const rnd=(i)=>{const x=Math.sin(i*127.1+DEMO.seed*311.7)*43758.5453;return x-Math.floor(x)};
+function demoDraw(t){
+ const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#5b5f66");g.addColorStop(1,"#3a3d42");cx.fillStyle=g;cx.fillRect(0,0,W,H);
+ cx.fillStyle="#2a2c30";cx.fillRect(DEMO.x-26,DEMO.top-20,12,DEMO.N*DEMO.pitch+40);cx.fillRect(DEMO.x+DEMO.w+14,DEMO.top-20,12,DEMO.N*DEMO.pitch+40);
+ const ph=((t%DEMO.T)/DEMO.T),hold=.12;let d=0;if(ph<.45)d=ph/.45;else if(ph<.45+hold)d=1;else if(ph<.9+hold)d=1-(ph-.45-hold)/.45;d=Math.max(0,Math.min(1,d));d=.5-.5*Math.cos(Math.PI*d);
+ // Pause: 4s Ruhe nach 5 Wiederholungen
+ const cyc=Math.floor(t/DEMO.T);const rest=(cyc%7>=5);const off=rest?0:d*DEMO.A;
+ for(let i=0;i<DEMO.N;i++){const lifted=i<DEMO.L,y=DEMO.top+i*DEMO.pitch-(lifted?off:0);
+  const sh=70+Math.round(rnd(i)*40);cx.fillStyle=`rgb(${sh},${sh+4},${sh+10})`;cx.fillRect(DEMO.x,y,DEMO.w,DEMO.pitch-3);
+  cx.fillStyle="rgba(255,255,255,.18)";cx.fillRect(DEMO.x,y,DEMO.w,3);cx.fillStyle="#1a1a1a";cx.fillRect(DEMO.x,y+DEMO.pitch-3,DEMO.w,3);
+  cx.fillStyle="rgba(255,255,255,.55)";cx.font="bold 15px sans-serif";cx.fillText(String((i+1)*5),DEMO.x+10,y+DEMO.pitch-10);
+  if(i===DEMO.L-1){cx.fillStyle="#E4FF3A";cx.fillRect(DEMO.x+DEMO.w-50,y+8,70,10)}}
+ cx.fillStyle="rgba(0,0,0,"+(.02*Math.random())+")";cx.fillRect(0,0,W,H);
 }
+/* ---------- Analyse ---------- */
+const P=window.P={reps:0,pitch:0,nTot:0,nLift:0,pos:0,dy:0,lifted:[],sets:[],conf:false,kpp:5};
+let prev=null,hist=[],pos=0,posHP=0,posLo=1e9,posHi=-1e9,lastRep=0,state="low",lastMove=0,setReps=0,t0=performance.now();
+let motRow=new Float32Array(ROWS),pitchHist=[],liftEst=[];
+function profile(){ // ROI -> Zeilenprofil
+ ofx.drawImage(cv,roi.x,roi.y,roi.w,roi.h,0,0,COLS,ROWS);
+ const d=ofx.getImageData(0,0,COLS,ROWS).data,p=new Float32Array(ROWS);
+ for(let y=0;y<ROWS;y++){let s=0;for(let x=0;x<COLS;x++){const i=(y*COLS+x)*4;s+=d[i]*.3+d[i+1]*.59+d[i+2]*.11}p[y]=s/COLS}
+ // Hochpass (lokales Mittel abziehen)
+ const q=new Float32Array(ROWS);for(let y=0;y<ROWS;y++){let s=0,n=0;for(let k=-8;k<=8;k++){const j=y+k;if(j>=0&&j<ROWS){s+=p[j];n++}}q[y]=p[y]-s/n}
+ return q}
+function estPitch(q){let best=0,bl=0;const n=ROWS,m=[];for(let l=6;l<=70;l++){let s=0,c=0;for(let y=0;y+l<n;y++){s+=q[y]*q[y+l];c++}m[l]=s/c}
+ let v0=0;for(let y=0;y<n;y++)v0+=q[y]*q[y];v0/=n;
+ const pk=[];for(let l=8;l<=69;l++)if(m[l]>m[l-1]&&m[l]>=m[l+1])pk.push(l);for(const l of pk)if(m[l]>best)best=m[l];
+ for(const l of pk)if(m[l]>=.55*best){bl=l;break}
+ return best>.12*v0?bl:0}
+function shiftEst(a,b,mask){ // b = vorher, a = jetzt; Zeilen aus mask; a[y]≈b[y-s]
+ const R=10;let bestS=0,bestV=1e18,vals=[];for(let s=-R;s<=R;s++){let v=0,c=0;for(let y=R;y<ROWS-R;y++){if(!mask[y])continue;const d=a[y]-b[y-s];v+=d*d;c++}vals.push(c>8?v/c:1e18);if(c>8&&v/c<bestV){bestV=v/c;bestS=s}}
+ if(bestV>=1e17)return 0;const i=bestS+R;const l=vals[i-1],r=vals[i+1],c=vals[i];let sub=0;if(l<1e17&&r<1e17){const den=l-2*c+r;if(den>1e-6)sub=.5*(l-r)/den}return bestS+Math.max(-.5,Math.min(.5,sub))}
+function step(now){
+ const q=profile();const tt=(now-t0)/1000;
+ if(prev){
+  const dif=new Float32Array(ROWS);for(let y=0;y<ROWS;y++){dif[y]=Math.abs(q[y]-prev[y]);motRow[y]=motRow[y]*.6+dif[y]*.4}
+  let mx=0;for(let y=0;y<ROWS;y++)if(motRow[y]>mx)mx=motRow[y];
+  const thr=Math.max(1.2,mx*.3),mask=new Uint8Array(ROWS);for(let y=0;y<ROWS;y++)mask[y]=motRow[y]>thr?1:0;
+  let dy=mx>1.5?shiftEst(q,prev,mask):0;if(Math.abs(dy)<.15)dy=0;
+  P.dy=dy;pos+=dy; // y nach unten positiv
+  posHP=pos;
+  // Bewegung der Zeile -> Block-Grenzen
+  let runS=-1,runE=-1,bs=0,bl=0,s0=-1;for(let y=0;y<ROWS;y++){if(mask[y]){if(s0<0)s0=y}else if(s0>=0){if(y-s0>bl){bl=y-s0;bs=s0}s0=-1}}if(s0>=0&&ROWS-s0>bl){bl=ROWS-s0;bs=s0}
+  P.mov=bl>6?{s:bs,e:bs+bl}:null;
+  if(Math.abs(dy)>1.2&&P.mov&&P.pitch){const d=Math.max(0,posRef()-pos); // gehoben = pos kleiner
+   const topGap=P.mov.s,h=(P.mov.e)+d-0; liftEst.push(h/P.pitch);if(liftEst.length>120)liftEst.shift()}
+  // Hub-Signal
+  sig.push([tt,pos]);while(sig.length&&tt-sig[0][0]>8)sig.shift();
+  count(tt,dy);
+ }
+ if(!(hist.length%10)){const pi=estPitch(q);if(pi){pitchHist.push(pi);if(pitchHist.length>15)pitchHist.shift();const s=[...pitchHist].sort((a,b)=>a-b);P.pitch=s[s.length>>1]}}
+ hist.push(1);prev=q;
+ updateUI();
+}
+const sig=[];let lowRef=null;
+function posRef(){let m=-1e9;for(const s of sig)if(s[1]>m)m=s[1];return m} // Ruhelage = größtes pos (Block unten)
+function count(tt,dy){
+ if(Math.abs(dy)>.6)lastMove=tt;
+ if(sig.length<20)return;
+ let lo=1e9,hi=-1e9;for(const s of sig){if(s[1]<lo)lo=s[1];if(s[1]>hi)hi=s[1]}
+ const minR=Math.max(20,(P.pitch||12)*2.5),rng=hi-lo;
+ if(rng<minR){return}
+ const n=pos,fr=(hi-n)/rng; // 0 = unten (Ruhe), 1 = oben
+ if(state==="low"&&fr>.65)state="high";
+ else if(state==="high"&&fr<.35){state="low";if(tt-lastRep>.6){lastRep=tt;P.reps++;setReps++;P.lifted.push(medianLift())}}
+}
+function medianLift(){if(!liftEst.length)return 0;const s=[...liftEst].sort((a,b)=>a-b);return Math.round(s[s.length>>1])}
+function endSetCheck(tt){
+ if(setReps>0&&tt-lastMove>6){const n=medianLift();P.sets.push({reps:setReps,plates:n,kg:+(n*P.kpp).toFixed(1)});setReps=0;P.reps=0;liftEst=[];P.lifted=[];sig.length=0;state="low";renderLog()}}
+function renderLog(){const l=$("log");if(!P.sets.length)return;l.innerHTML=P.sets.map((s,i)=>`<div><span>Satz ${i+1}</span><b style="color:#fff">${s.reps} × ${s.kg} kg</b><span>${s.plates} Platten</span></div>`).join("")}
+function updateUI(){
+ $("reps").textContent=P.reps;
+ P.kpp=+$("kpp").value||5;
+ const nTot=P.pitch?Math.round(ROWS/P.pitch):0,nl=medianLift();P.nTot=nTot;P.nLift=nl;
+ $("nTot").textContent=nTot||"–";$("nLift").textContent=nl||"–";
+ $("kg").textContent=nl?(nl*P.kpp).toFixed(1).replace(".0","")+" kg":"–";
+ $("kgs").textContent=nl?nl+" Platten × "+P.kpp+" kg":"Block einmal anheben";
+ let w="";if(P.mov&&P.mov.s>ROWS*.12&&Math.abs(P.dy)>1.2)w="Rahmen oben an der obersten Platte ansetzen.";else if(!P.pitch)w="Platten nicht erkannt: Rahmen enger um den Stapel ziehen.";$("warn").textContent=w}
+/* ---------- Overlay ---------- */
+function drawOv(){
+ ox.clearRect(0,0,W,H);ox.lineWidth=3;ox.strokeStyle="#E4FF3A";ox.strokeRect(roi.x,roi.y,roi.w,roi.h);
+ const sc=roi.h/ROWS;
+ if(P.pitch){ox.strokeStyle="rgba(228,255,58,.55)";ox.lineWidth=1;for(let y=0;y<ROWS;y+=P.pitch){ox.beginPath();ox.moveTo(roi.x-10,roi.y+y*sc);ox.lineTo(roi.x,roi.y+y*sc);ox.stroke()}}
+ if(P.mov&&Math.abs(P.dy)>.8){ox.strokeStyle="#FF5A2A";ox.lineWidth=3;ox.beginPath();ox.moveTo(roi.x,roi.y+P.mov.e*sc);ox.lineTo(roi.x+roi.w,roi.y+P.mov.e*sc);ox.stroke()}
+ // Kurve
+ const gx=14,gy=H-86,gw=W-28,gh=70;ox.fillStyle="rgba(0,0,0,.55)";ox.fillRect(gx,gy,gw,gh);
+ if(sig.length>2){let lo=1e9,hi=-1e9;for(const s of sig){lo=Math.min(lo,s[1]);hi=Math.max(hi,s[1])}const rg=Math.max(30,hi-lo),t1=sig[sig.length-1][0];ox.strokeStyle="#E4FF3A";ox.lineWidth=2;ox.beginPath();sig.forEach((s,i)=>{const X=gx+gw*(1-(t1-s[0])/8),Y=gy+gh-6-(hi-s[1]+0)/rg*(gh-12)*-1;const y2=gy+6+(s[1]-lo)/rg*(gh-12);i?ox.lineTo(X,y2):ox.moveTo(X,y2)});ox.stroke()}
+}
+/* ---------- Loop ---------- */
+function frame(now){
+ if(mode==="demo")demoDraw((now-t0)/1000);
+ else if(vd.readyState>=2){const vw=vd.videoWidth,vh=vd.videoHeight,k=Math.max(W/vw,H/vh),dw=vw*k,dh=vh*k;cx.drawImage(vd,(W-dw)/2,(H-dh)/2,dw,dh)}
+ step(now);endSetCheck((now-t0)/1000);drawOv();requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+/* ---------- Eingabe ---------- */
+function resetAll(){P.reps=0;setReps=0;liftEst=[];P.lifted=[];sig.length=0;state="low";prev=null;pos=0}
+$("bReset").onclick=resetAll;
+$("bConfirm").onclick=()=>{P.conf=true;try{localStorage.setItem("kpp",$("kpp").value)}catch(e){}$("bConfirm").textContent="Gespeichert ✓";setTimeout(()=>$("bConfirm").textContent="Gewicht stimmt",1400)};
+try{const v=localStorage.getItem("kpp");if(v)$("kpp").value=v}catch(e){}
+function setMode(m){mode=m;["bDemo","bCam"].forEach(i=>$(i).classList.remove("on"));if(m==="demo")$("bDemo").classList.add("on");if(m==="cam")$("bCam").classList.add("on");resetAll();t0=performance.now()}
+$("bDemo").onclick=()=>{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}vd.pause();setMode("demo")};
+$("bCam").onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false});vd.srcObject=stream;await vd.play();setMode("cam")}catch(e){$("warn").textContent="Kamera nicht verfügbar (https nötig, Zugriff erlauben)."}};
+$("fv").onchange=e=>{const f=e.target.files[0];if(!f)return;vd.srcObject=null;vd.src=URL.createObjectURL(f);vd.play();setMode("vid")};
+// ROI ziehen
+let drag=null;const st=$("stage");
+function pt(e){const r=st.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}}
+st.addEventListener("pointerdown",e=>{drag=pt(e);st.setPointerCapture(e.pointerId)});
+st.addEventListener("pointermove",e=>{if(!drag)return;const p=pt(e);const x=Math.min(drag.x,p.x),y=Math.min(drag.y,p.y),w=Math.abs(p.x-drag.x),h=Math.abs(p.y-drag.y);if(w>30&&h>60){roi={x:Math.max(0,x),y:Math.max(0,y),w:Math.min(W-x,w),h:Math.min(H-y,h)};pitchHist=[];resetAll()}});
+st.addEventListener("pointerup",()=>drag=null);
 </script></body></html>
